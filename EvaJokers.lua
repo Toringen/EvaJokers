@@ -3,7 +3,7 @@
 --- MOD_ID: EvaJokers
 --- PREFIX: eva
 --- MOD_AUTHOR: [Evidence02]
---- MOD_DESCRIPTION: [Bunch of Jokers and stuff?]
+--- MOD_DESCRIPTION: [Bunch of Jokers and other stuff?]
 --- DEPENDENCIES: [Steamodded>=1.0.0~ALPHA-0812d]
 --- BADGE_COLOR: c7638f
 --- VERSION: 0.0.1
@@ -35,10 +35,13 @@ end
 
 -- TODO: get tag list from game
 local function get_random_tag(seed)
-	local list_tags = { 'tag_uncommon', 'tag_rare', 'tag_negative', 'tag_foil', 'tag_holo', 'tag_polychrome', 'tag_investment', 'tag_voucher', 'tag_boss', 'tag_standard', 'tag_charm', 'tag_meteor', 'tag_buffoon', 'tag_handy', 'tag_garbage', 'tag_ethereal', 'tag_coupon', 'tag_double', 'tag_juggle', 'tag_d_six', 'tag_top_up', 'tag_skip', 'tag_orbital', 'tag_economy' }
-	return pseudorandom_element(list_tags, pseudoseed('j_eva_tagged'))
+	return get_next_tag_key(seed)
 	
-	--local temp_tag = pseudorandom_element(G.GAME.tags, pseudoseed('j_eva_tagged'))
+	--local list_tags = { 'tag_uncommon', 'tag_rare', 'tag_negative', 'tag_foil', 'tag_holo', 'tag_polychrome', 'tag_investment', 'tag_voucher', 'tag_boss', 'tag_standard', 'tag_charm', 'tag_meteor', 'tag_buffoon', 'tag_handy', 'tag_garbage', 'tag_ethereal', 'tag_coupon', 'tag_double', 'tag_juggle', 'tag_d_six', 'tag_top_up', 'tag_skip', 'tag_orbital', 'tag_economy' }
+	--return pseudorandom_element(list_tags, pseudoseed(seed))
+	
+	
+	--local temp_tag = pseudorandom_element(G.GAME.tags, pseudoseed(seed))
 	--return temp_tag.name
 end
 
@@ -109,46 +112,20 @@ local function copy_and_reroll_card(card, base)
 end
 
 
-local function recalculate_fulldeck_jokers()
-	for _, v in pairs(G.jokers.cards) do
-		if v.ability.name == "Eva Maroon" then recalculate_maroon(v) end
-	end
-end
 
-local function recalculate_maroon_joker(joker)
-	local xmult = 1
-	for k, v in pairs(G.playing_cards) do 
-		if v.ability.effect ~= 'Stone Card' then
-			if v:is_suit('Hearts') or v:is_suit('Diamonds') then xmult = xmult + joker.ability.extra.xmult_add end
-			if v:is_suit('Clubs' ) or v:is_suit('Spades')   then xmult = xmult - joker.ability.extra.xmult_sub end
-			--    if v.base.suit == 'Hearts' or v.base.suit == 'Diamonds' then xmult = xmult + joker.ability.extra.xmult_add   
-			--elseif v.base.suit == 'Clubs'  or v.base.suit == 'Spades'   then xmult = xmult - joker.ability.extra.xmult_sub end
-		end
-	end
-	joker.ability.extra.current_xmult = xmult
-end
-
-local function recalculate_simple_joker(joker)
-	local chips = 0
-	for _, v in pairs(G.playing_cards) do 
-		if v.ability.effect == 'Base' and not v.seal and not v.edition then
-			chips = chips + joker.ability.extra.chips_add
-		end
-	end
-	joker.ability.extra.chips = chips
-end
-
-
-
-
-
---[===
+SMODS.Atlas {
+    key = 'eva_decks',
+    path = 'eva_decks.png',
+    px = 71,
+    py = 95
+}
 
 --[ Square Deck
 SMODS.Back{
 	name = "SquareDeck",
 	key = "square",
-	pos = {x = 1, y = 3},
+	atlas = "eva_decks",
+	pos = {x = 0, y = 0},
 	config = { 
 		discards = 1, 
 		hand_size = -3, 
@@ -158,9 +135,9 @@ SMODS.Back{
 	loc_txt = {
 		name ="Square Deck",
 		text={
-			"Start with a Deck",
-			"full of {C:attention}Face cards{}",
-			"{C:attention}Familiar{} and {C:attention}Grim{} cards"
+			"Contains only {C:attention}Aces{}, {C:attention}Kings{},",
+			"{C:attention}Queens{} and {C:attention}Jacks{}",
+			"Starts with {C:spectral}Familiar{} and {C:spectral}Grim{}"
 		},
     },
 	loc_vars = function(self)
@@ -186,15 +163,16 @@ SMODS.Back{
 SMODS.Back{
 	name = "Tag Deck",
 	key = "tag",
-	pos = {x = 0, y = 0},
+	atlas = "eva_decks",
+	pos = { x = 1, y = 0 },
 	config = { 
 		eva_tag_deck = true
 	},
 	loc_txt = {
 		name ="Tag Deck",
 		text={
-			"Create 2 random {C:attention}Tags{}",
-			"every blind"
+			"Create random {C:attention}Tag{}",
+			"every {C:attention}Small{} and {C:attention}Big Blind{}"
 		},
     }
 }
@@ -204,7 +182,8 @@ SMODS.Back{
 SMODS.Back{
 	name = "Unstable Deck",
 	key = "unstable",
-	pos = {x = 0, y = 0},
+	atlas = "eva_decks",
+	pos = {x = 2, y = 0},
 	config = { 
 		eva_unstable_deck = true
 	},
@@ -225,7 +204,7 @@ SMODS.Back{
 				card:flip()
 				card:set_base(G.P_CARDS[new_suit ..'_'.. rank_to_string(new_id)])
 				
-				-- Give random enhancement
+				-- Get random enhancement
 				if pseudorandom('d6_chance_enhancement') < 0.3 then 
 					card:set_ability(get_random_enhancement('deckunstable_enhancement', true), nil, true)
 				end
@@ -257,10 +236,7 @@ local challenges = {
 	{
         name = "Night on Mars",
         id = 'c_mod_evanightonmars',
-        text = {
-			"Start with {C:attention}Life on Mars{}",
-			"and {C:attention}Weakness{}"
-		},
+        text = { },
         rules = {
             custom = {},
             modifiers = {
@@ -304,10 +280,7 @@ local challenges = {
 	{
         name = "Major Arcana",
         id = 'c_mod_evamajorarcana',
-        text = {
-			"Start with {C:attention}Life on Mars{}",
-			"and {C:attention}Weakness{}"
-		},
+        text = { },
         rules = {
             custom = {
 				{ id = 'no_shop_jokers' }
@@ -359,14 +332,14 @@ local jokers = {
 	endlessloop = {
 		name = "Endless Loop",
 		text = {
-			"Using any {C:attention}consumable{}",
-			"give {C:green}#1# in #2#{} chance",
-			"to create her copy",
+			"{C:green}#1# in #2#{} chance to return",
+			"used {C:tarot}Tarot{} or {C:planet}Planet{} card",
+			"back into hand",
 			"{C:inactive}(#4# uses this round)",
 		},
 		config = { extra = { odds = 3, limit = 10, repeats = 0 } },
 		rarity = 2,
-		cost = 5,
+		cost = 8,
         blueprint_compat = false,
         eternal_compat = true,
         unlocked = true,
@@ -375,30 +348,35 @@ local jokers = {
         calculate = function(self, context)
 			if 			context.using_consumeable 
 					and context.consumeable 
-					and context.consumeable.ability.name ~= 'The Fool' 
-					and context.consumeable.ability.name ~= 'The Emperor' 
+					and (context.consumeable.ability.set == "Tarot" or context.consumeable.ability.set == "Planet")
 					and pseudorandom('endlessloop') < G.GAME.probabilities.normal/self.ability.extra.odds 
-					and #G.consumeables.cards + G.GAME.consumeable_buffer < G.consumeables.config.card_limit 
-					and self.ability.extra.repeats < self.ability.extra.limit then 
-				self.ability.extra.repeats = self.ability.extra.repeats + 1
-				G.GAME.consumeable_buffer = G.GAME.consumeable_buffer + 1
-				G.E_MANAGER:add_event(Event({
-					trigger = 'before',
-					delay = 0.0,
-					func = (function()
-							local card = copy_card(context.consumeable, nil)
-							card:add_to_deck()
-							G.consumeables:emplace(card)
-							G.GAME.consumeable_buffer = 0	
-										
-							-- Message
-							card_eval_status_text(self, "extra", nil, nil, nil, {
-								message = localize("eva_repeat"),
-								colour = G.C.PURPLE
-							})
-						return true
-					end)}))
-		
+					and self.ability.extra.repeats < self.ability.extra.limit 
+					then 
+					
+				local cards_create = 
+					context.consumeable.ability.name == 'The Fool' 				and 1 or
+					context.consumeable.ability.name == 'The Emperor' 			and 2 or
+					context.consumeable.ability.name == 'The High Priestess' 	and 2 or 0
+				if #G.consumeables.cards + G.GAME.consumeable_buffer + cards_create < G.consumeables.config.card_limit then
+					self.ability.extra.repeats = self.ability.extra.repeats + 1
+					G.GAME.consumeable_buffer = G.GAME.consumeable_buffer + 1
+					G.E_MANAGER:add_event(Event({
+						trigger = 'before',
+						delay = 0.0,
+						func = (function()
+								local card = copy_card(context.consumeable, nil)
+								card:add_to_deck()
+								G.consumeables:emplace(card)
+								G.GAME.consumeable_buffer = 0	
+											
+								-- Message
+								card_eval_status_text(self, "extra", nil, nil, nil, {
+									message = localize("eva_repeat"),
+									colour = G.C.PURPLE
+								})
+							return true
+						end)}))
+				end
 			end
 			
 			-- Restore limits at the end of round
@@ -418,7 +396,7 @@ local jokers = {
 			"If player have any {C:attention}consumable",
 			"at the end of the shop, destroy one",
 			"and balance {C:chips}chips{} and {C:mult}mult{}",
-			"{C:inactive}#1#{}",
+			"{C:inactive}(State: #1#{})",
 		},
 		config = { extra = { active = false } },
 		rarity = 2,
@@ -499,7 +477,7 @@ local jokers = {
             end
         end,
 		loc_def = function(self)
-			return { self.ability.extra.active and "Active" or "Inactive" }
+			return { self.ability.extra.active and "active" or "inactive" }
 		end,
 	},
 	
@@ -509,8 +487,7 @@ local jokers = {
 		name = "Golden Idol",
 		text = {
             "If {C:attention}discard{} have only one",
-			"{C:attention}#2#{} of {C:spades}#3#{},",
-			"earn {C:money}$#1#{}",
+			"{C:attention}#2#{} of {C:hearts}#3#{}, earn {C:money}$#1#{}",
 			"{s:0.8}Card changes every round"
 		},
 		ability_name = "Eva Golden Idol",
@@ -558,8 +535,7 @@ local jokers = {
 		text = {
             "If all played cards of the {C:attention}first hand{}",
 			"are the {C:attention}same rank{},",
-			"{C:attention}decrease{} rank and remove",
-			"{C:attention}Enhancement{}, {C:attention}Seal{} and {C:attention}Edition{}"
+			"{C:red}decrease their rank and debuff cards{}"
 		},
 		config = { extra = { mult = 0, mod_conv = 'up_rank' } },
 		rarity = 1,
@@ -570,7 +546,7 @@ local jokers = {
 		discovered = true,
 		effect = 'Support',
 		calculate = function(self, context)
-			if context.cardarea == G.jokers and context.before and not context.repetition then
+			if context.cardarea == G.jokers and context.before and not context.repetition and G.GAME.current_round.hands_played == 0 then
 				local is_active = true
 				local saved_rank = -1
 				for i = 1, #context.full_hand do 
@@ -593,17 +569,19 @@ local jokers = {
 						v:set_base(G.P_CARDS[suit_prefix .. rank_to_string(rank_suffix)])	
 						
 						-- Debuff it!
-						--if not v.debuff then
-							--v.ability.perma_debuff = true
-							--v:set_debuff(true)
-						--end
+						if not v.debuff then
+							v.ability.perma_debuff = true
+							v:set_debuff(true)
+						end
 						
 						-- previous version: remove all Enhancement and other stuff instead of debuffing
+						--[[
 						if not v.debuff then
 							if v.config.center ~= G.P_CENTERS.c_base then v:set_ability(G.P_CENTERS.c_base, nil, true) end
 							if v.edition then card:set_edition(nil, true) end
 							if v.seal then card:set_seal(nil) end
 						end
+						--]]
 						
 						G.E_MANAGER:add_event(Event({
 							func = function()
@@ -626,13 +604,14 @@ local jokers = {
 		end,
 	},
 	
+	
 	-- TODO: text appears too late
 	-- Support (tag)
 	lifeonmars = {
 		name = "Life on Mars",
 		text = {
 			"If {C:attention}poker hand{} is a",
-			"{C:attention}#1#{}, give a",
+			"{C:attention}#1#{}, gives a",
 			"{C:dark_edition}Negative Tag{}"
 		},
 		config = { extra = { poker_hand = 'Four of a Kind' } },
@@ -644,8 +623,9 @@ local jokers = {
 		discovered = true,
 		effect = 'Tag',
 		calculate = function(self, context)
-            if SMODS.end_calculate_context(context) and next(context.poker_hands[self.ability.extra.poker_hand]) then
-                add_tag(Tag('tag_negative'))
+            if SMODS.end_calculate_context(context) and next(context.poker_hands[self.ability.extra.poker_hand]) and #context.scoring_hand == 4  then
+            --if context.cardarea == G.jokers and context.before and context.scoring_name == self.ability.to_do_poker_hand then
+			    add_tag(Tag('tag_negative'))
 				card_eval_status_text(self, "extra", nil, nil, nil, {
 					message = localize("eva_addtag"),
 					colour = G.C.PURPLE
@@ -657,12 +637,13 @@ local jokers = {
 		end,
 	},
 	
-	-- Support (tag)
+	-- Support
 	tagged = {
 		name = "Tagged",
 		text = {
 			"Create a random {C:attention,T:tag_double}Tag{}",
-			"when {C:attention}Blind{} is selected",
+			"when {C:attention}Small{} or {C:attention}Big Blind{}",
+			"is selected",
 			"{C:inactive}(Must have room)",
 		},
 		config = { extra = { } },
@@ -671,10 +652,10 @@ local jokers = {
 		blueprint_compat = true,
 		eternal_compat = true,
 		unlocked = true,
-		discovered = false,
+		discovered = true,
 		effect = 'Tag',
 		calculate = function(self, context)
-            if context.setting_blind and not self.getting_sliced and not (context.blueprint_card or self).getting_sliced then
+            if context.setting_blind and not self.getting_sliced and not (context.blueprint_card or self).getting_sliced and not G.GAME.blind.boss then
 				local tag_name = get_random_tag('j_eva_tagged')
 				local tag = Tag(tag_name)
 				if tag_name == 'tag_orbital' then
@@ -699,13 +680,14 @@ local jokers = {
 		end,
 	},
 	
+	-- TODO: check!
 	-- Support
 	precognition = {
 		name = "Precognition",
 		text = {
             "Shows two next cards in the deck",
 			"Charge by selling Jokers for {C:blue}1{}, {C:green}2{}, {C:red}4{} or {C:legendary,E:1}12{} rounds",
-			"Current charges: {C:attention}#1#{}",
+			"{C:inactive}(Current charges: {C:attention}#1#{}{C:inactive}){}",
 			"Next cards: {C:attention}#2#{} of {C:diamonds}#3#{}, {C:attention}#4#{} of {C:diamonds}#5#{}"
 		},
 		ability_name = "Eva Precognition",
@@ -715,7 +697,7 @@ local jokers = {
 		blueprint_compat = false,
 		eternal_compat = true,
 		unlocked = true,
-		discovered = false,
+		discovered = true,
 		effect = 'Support',
 		calculate = function(self, context)
 			-- Read remained cards
@@ -737,8 +719,8 @@ local jokers = {
 					self.ability.extra.card1_suit =           G.deck.cards[#G.deck.cards - del - 0].base.suit
 				end
 				if G.deck.cards[del + 2] then 
-					self.ability.extra.card1_rank = rank_name(G.deck.cards[#G.deck.cards - del - 1].base.id)
-					self.ability.extra.card1_suit =           G.deck.cards[#G.deck.cards - del - 1].base.suit
+					self.ability.extra.card2_rank = rank_name(G.deck.cards[#G.deck.cards - del - 1].base.id)
+					self.ability.extra.card2_suit =           G.deck.cards[#G.deck.cards - del - 1].base.suit
 				end
 			end
 			
@@ -756,56 +738,49 @@ local jokers = {
             end
 		end,
 		loc_def = function(self)
-			return { self.ability.extra.charges, self.ability.extra.card1, self.ability.extra.sep1, self.ability.extra.card2, self.ability.extra.sep2, self.ability.extra.card3 }
+			return { self.ability.extra.charges, self.ability.extra.card1_rank, self.ability.extra.card1_suit, self.ability.extra.card2_rank, self.ability.extra.card2_suit }
 		end,
 	},
 	
-	-- TODO: rework?!
 	-- Mult (scale)
-	crystaljoker = {
+	crystal_joker = {
 		name = "Crystal Joker",
 		text = {
-			"{C:mult}+#1#{} Mult per {C:attention}#3#{} card scored,",
-			"{C:mult}-#2#{} Mult per {C:attention}#3#{} card discard,",
-					"suit changes every round",
-                    "{C:inactive}(Currently {C:mult}+#4#{C:inactive} Mult)"
+			"Gains {C:mult}+#1#{} Mult per every",
+			"played and unscored {C:attention}#3#{} card",
+			"suit changes every round",
+			"{C:inactive}(Currently {C:mult}+#4#{C:inactive} Mult)"
 		},
-		config = { extra = { mult_add = 1, mult_sub = 3, suit = 'Spades', current_mult = 0 } },
+		config = { extra = { mult_add = 1, suit = 'Spades', current_mult = 0 } },
 		rarity = 1,
-		cost = 4,
+		cost = 7,
 		blueprint_compat = true,
 		eternal_compat = true,
 		unlocked = true,
-		discovered = false,
+		discovered = true,
 		effect = 'Mult',
 		calculate = function(self, context)
             if SMODS.end_calculate_context(context) then
+				
+				if not context.blueprint then
+					for _, v in ipairs(context.full_hand) do
+						if v:is_suit(self.ability.extra.suit) then 
+							local is_scoring = false
+							for _, v2 in ipairs(context.scoring_hand) do if v == v2 then is_scoring = true end end
+							if not is_scoring then
+								self.ability.extra.current_mult = self.ability.extra.current_mult + self.ability.extra.mult_add
+							end
+						end
+					end
+				end
+				
 				return {
 					mult_mod = self.ability.extra.current_mult,
 					card = self,
 					message = localize { type = 'variable', key = 'a_mult', vars = { self.ability.extra.current_mult or 0 } }
 				}
             end
-			
-			-- Play
-            if context.individual and context.cardarea == G.play and not context.blueprint and context.other_card:is_suit(self.ability.extra.suit) then
-                self.ability.extra.current_mult = self.ability.extra.current_mult + self.ability.extra.mult_add
-				card_eval_status_text(self, "extra", nil, nil, nil, {
-					message = "+" .. self.ability.extra.mult_add .. " Mult",
-					colour = G.C.PURPLE
-				})
-            end
-			
-			-- Discard
-            if context.discard and not context.blueprint and context.other_card:is_suit(self.ability.extra.suit) and self.ability.extra.current_mult > 0 then
-				local _sub = math.min(self.ability.extra.current_mult, self.ability.extra.mult_sub) 
-                self.ability.extra.current_mult = self.ability.extra.current_mult - _sub
-				card_eval_status_text(self, "extra", nil, nil, nil, {
-					message = "-" .. _sub .. " Mult",
-					colour = G.C.PURPLE
-				})
-            end
-			
+						
 			-- Changes at end of round
 			if context.end_of_round and not context.individual and not context.repetition and not context.blueprint then
 				self.ability.extra.suit = 'Spades'
@@ -824,15 +799,15 @@ local jokers = {
 	maroon = {
 		name = "Maroon",
 		text = {
-			"Gains {X:mult,C:white}X#2#{} Mult for each {C:heart}red{} card",
-			"and {X:mult,C:white}-X#3#{} Mult for each {C:spades}black{} card",
+			"Gains {X:mult,C:white}X#2#{} Mult for each {C:hearts}Heart{} or {C:diamonds}Diamond{} card",
+			"and {X:mult,C:white}-X#3#{} Mult for each {C:clubs}Club{} or {C:spades}Spade{} card",
 			"in a full deck",
 			"{C:inactive}(Currently {X:mult,C:white}X#1#{C:inactive} Mult){}"
 		},
 		ability_name = 'Eva Maroon',
-		config = { extra = { current_xmult = 0, xmult_add = 0.1, xmult_sub = 0.1 } },
+		config = { extra = { current_xmult = 1, xmult_add = 0.1, xmult_sub = 0.1 } },
 		rarity = 2,
-		cost = 7,
+		cost = 6,
 		blueprint_compat = true,
 		eternal_compat = true,
 		unlocked = true,
@@ -840,7 +815,6 @@ local jokers = {
 		effect = 'XMult',
 		calculate = function(self, context)
 			if SMODS.end_calculate_context(context) and self.ability.extra.current_xmult >= 1 then
-				recalculate_maroon_joker(self)
 				return {
 					Xmult_mod = self.ability.extra.current_xmult,
 					card = self,
@@ -857,6 +831,7 @@ local jokers = {
 		end,
 	},
 	
+	-- TODO: check!
 	-- XMult (scale)
 	ladder = {
 		name = "Ladder",
@@ -866,8 +841,8 @@ local jokers = {
 			"{C:inactive}(can upscale multiple times per hand){}",
 			"{C:inactive}(Currently {X:mult,C:white} X#1# {C:inactive} Mult)",
 		},
-		config = { extra = { rank = 2, rank_name = '2', current_xmult = 1, xmult_add = 0.1 } },
-		rarity = 2,
+		config = { extra = { rank = 2, rank_name = '2', current_xmult = 1, xmult_add = 0.07 } },
+		rarity = 1,
 		cost = 8,
 		blueprint_compat = true,
 		eternal_compat = true,
@@ -875,11 +850,13 @@ local jokers = {
 		discovered = true,
 		effect = 'XMult',
 		calculate = function(self, context)
+			--[[
 			if context.individual and context.cardarea == G.play and not context.other_card.debuff then
 				local rank = self.ability.extra.rank
 				local move_forward = true
 				local card_count = 0
 				while move_forward and card_count < 13 do
+					move_forward = false
 					for i = 1,#context.scoring_hand do
 						if 		context.scoring_hand[i].base.id == rank 
 							and context.scoring_hand[i].ability.effect ~= 'Stone Card'
@@ -903,29 +880,32 @@ local jokers = {
 					end
 				end
 			end
+			--]]
 			
 			if SMODS.end_calculate_context(context) then
-				local cards = {}
-				local move_forward = true
-				while move_forward and #cards < 13 do
-					move_forward = false
-					for i = 1,#context.scoring_hand do
-						if 		context.scoring_hand[i].base.id == self.ability.extra.rank 
-							and context.scoring_hand[i].ability.effect ~= 'Stone Card'
-							and not context.scoring_hand[i].debuff
-						then
-							move_forward = true
-							cards[#cards] = context.scoring_hand[i]
-							self.ability.extra.rank = self.ability.extra.rank + 1
-							if self.ability.extra.rank > 14 then self.ability.extra.rank = 2 end
-							break
+				if not context.blueprint then
+					local count_cards = 0
+					local move_forward = true
+					while move_forward and count_cards < 13 do
+						move_forward = false
+						for i = 1,#context.scoring_hand do
+							if 		context.scoring_hand[i].base.id == self.ability.extra.rank 
+								and context.scoring_hand[i].ability.effect ~= 'Stone Card'
+								and not context.scoring_hand[i].debuff
+							then
+								move_forward = true
+								count_cards = count_cards + 1
+								self.ability.extra.rank = self.ability.extra.rank + 1
+								if self.ability.extra.rank > 14 then self.ability.extra.rank = 2 end
+								break
+							end
 						end
 					end
-				end
-				
-				if #cards > 0 then
-					self.ability.extra.current_xmult = self.ability.extra.current_xmult + self.ability.extra.xmult_add * #cards
-					self.ability.extra.rank_name = rank_name(self.ability.extra.rank)
+					
+					if count_cards > 0 then
+						self.ability.extra.current_xmult = self.ability.extra.current_xmult + self.ability.extra.xmult_add * count_cards
+						self.ability.extra.rank_name = rank_name(self.ability.extra.rank)
+					end
 				end
 				
 				return {
@@ -947,7 +927,7 @@ local jokers = {
 	useless_joker = {
 		name = "Useless Joker",
 		text = {
-            "+{C:dark_edition}#1#{} Joker slot"
+            "{C:dark_edition}+#1# Joker slot!{}"
 		},
 		config = { extra = { j_slots = 1 } },
 		rarity = 2,
@@ -964,7 +944,7 @@ local jokers = {
 		end,
 	},
 	
-	-- TODO: broke when there is no place
+	-- TODO: label!
 	-- Support (seal)
 	broken_seal_depatcher = {
 		name = "Broken Seal Depatcher",
@@ -972,7 +952,7 @@ local jokers = {
             "When card with a {C:attention}seal{} scored,",
 			"destroy {C:attention}seal{} and create",
 			"a random {C:spectral}Spectral Seal card{}",
-			"{C:red}Broke if no place in consumable slots{}"
+			"{C:red}self destructs if don't have room{}"
 		},
 		config = { extra = { cards = 1 } },
 		rarity = 2,
@@ -983,13 +963,13 @@ local jokers = {
 		discovered = true,
 		effect = 'Support',
 		calculate = function(self, context)
-			if context.individual and context.cardarea == G.play and context.other_card.seal and #G.consumeables.cards + G.GAME.consumeable_buffer < G.consumeables.config.card_limit then
+			if context.individual and context.cardarea == G.play and context.other_card.seal then
 				if #G.consumeables.cards + G.GAME.consumeable_buffer < G.consumeables.config.card_limit then 
 					-- Destroy seal on the card
 					context.other_card:juice_up(0.3, 0.5)
 					context.other_card:set_seal(nil, nil, true)
 					
-					-- Give a random Seal Spectral card
+					-- Gives a random Seal Spectral card
 					local list_spectrals = { 'c_deja_vu', 'c_medium', 'c_talisman', 'c_trance' }
 					local card = create_card('Spectral', G.consumeables, nil, nil, nil, nil, list_spectrals[math.random(#list_spectrals)])
 					card:add_to_deck()
@@ -1002,7 +982,7 @@ local jokers = {
 						card = self,
 						colour = G.C.PURPLE
 					}
-				else 
+				else
 					--[=[
 					G.E_MANAGER:add_event(Event({
 						func = function()
@@ -1025,9 +1005,23 @@ local jokers = {
 					})) 
 					--]=]
 					
+					
 					-- Broke
-					play_sound('glass'..math.random(1, 6), math.random()*0.2 + 0.9,0.5)
-					self:shatter()
+					G.E_MANAGER:add_event(Event({
+						func = function()
+							play_sound('glass'..math.random(1, 6), math.random()*0.2 + 0.9,0.5)
+							self:shatter()
+							--self.states.drag.is = true
+							--self.children.center.pinch.x = true
+							G.E_MANAGER:add_event(Event({trigger = 'after', delay = 0.3, blockable = false,
+								func = function()
+										G.jokers:remove_card(self)
+										self:remove()
+										self = nil
+									return true; end})) 
+							return true
+						end
+					})) 
 					return {
 						message = localize('eva_broken'),
 						colour = G.C.PURPLE
@@ -1044,14 +1038,14 @@ local jokers = {
 	dice = {
 		name = "The Dice",
 		text = {
-            "Rerolls {C:attention}first card{} in the hand",
-			"if played hand contains {C:attention}5{} [##] scoring cards",
+            "Rerolls {C:attention}leftmost card{} in the hand",
+			"if played {C:attention}5{} scoring cards",
 			"{C:green}#1# in #2#{} chance to add random Seal",
 			"{C:green}#1# in #3#{} chance to add random Edition"
 		},
 		config = { extra = { odds_seal = 3, odds_edition = 6, cards = 5 } },
-		rarity = 2,
-		cost = 8,
+		rarity = 3,
+		cost = 7,
 		blueprint_compat = true,
 		eternal_compat = true,
 		unlocked = true,
@@ -1072,7 +1066,7 @@ local jokers = {
 					-- Random enhancement
 					local enhancement = pseudorandom('d6_chance_enhancement') < 0.75 	and get_random_enhancement('d6_enhancement', true) or
 										card.ability.effect == 'Stone Card'				and G.P_CENTERS.c_base or nil
-					if enhancement then v:set_ability(enhancement, nil, true) end
+					if enhancement then card:set_ability(enhancement, nil, true) end
 					
 					-- Random seal
 					if not card.seal and pseudorandom('d6_chance_seal') < G.GAME.probabilities.normal/self.ability.extra.odds_seal then
@@ -1183,7 +1177,6 @@ local jokers = {
 	},
 	--]]
 	
-	-- TODO: image
 	-- XMult
 	money_control = {
 		name = "Money Control",
@@ -1229,7 +1222,7 @@ local jokers = {
 		config = { extra = { current_discards = 0, limit = 109, hands = 1 } },
 		rarity = 3,
 		cost = 9,
-        blueprint_compat = true,
+        blueprint_compat = false,
         eternal_compat = true,
         unlocked = true,
         discovered = true,
@@ -1272,7 +1265,6 @@ local jokers = {
 		end,
 	},
 	
-	-- TODO: image
 	-- Support
 	science = {
 		name = "Science",
@@ -1284,7 +1276,7 @@ local jokers = {
 		config = { extra = { hand_type = 'Royal Flush' } },
 		rarity = 3,
 		cost = 5,
-        blueprint_compat = true,
+        blueprint_compat = false,
         eternal_compat = true,
         unlocked = true,
         discovered = true,
@@ -1332,21 +1324,19 @@ local jokers = {
 		end,
 	},
 	
+	-- TODO: fix bugs!
 	-- Support
 	tarot_expansion = {
 		name = "Tarot Expansion",
 		text = {
-			"Расширяет [] при выборе карт Таро на 1",
-			
-			
-			"Allow to choose one more card to",
-			"{C:attention}Enhancement{} with Tarot card"
+			"Allow to choose one more card",
+			"when using {C:tarot}Tarot card{}"
 		},
 		ability_name = "Eva Tarot Expansion",
 		config = { extra = { add = 1 } },
 		rarity = 1,
 		cost = 3,
-        blueprint_compat = true,
+        blueprint_compat = false,
         eternal_compat = true,
         unlocked = true,
         discovered = true,
@@ -1358,32 +1348,28 @@ local jokers = {
 		end,
 	},
 	
-	-- TODO: check
+	-- TODO: permanent +15 chip bonus to the card?
 	-- Chips
 	fantasy_seal = {
 		name = "Fantasy Seal",
 		text = {
 			"Cards with a {C:attention}seal{}",
-			"give {C:chips}+#1#{} Chips",
+			"gives {C:chips}+#1#{} Chips",
 			"when scored"
 		},
 		config = { extra = { chips = 80 } },
 		rarity = 1,
-		cost = 6,
+		cost = 5,
         blueprint_compat = true,
         eternal_compat = true,
         unlocked = true,
         discovered = true,
         effect = 'Chips',
         calculate = function(self, context)
-			if context.individual and context.cardarea == G.play then -- and context.other_card.seal
+			if context.individual and context.cardarea == G.play and context.other_card.seal then
 				return {
-					message = localize {
-						type = "variable",
-						key = "a_chips",
-						vars = { self.ability.extra.chips }
-					},
-					chip_mod = self.ability.extra.chips,
+					chips = self.ability.extra.chips,
+					colour = G.C.CHIPS,
 					card = self
 				}
 			end
@@ -1393,14 +1379,14 @@ local jokers = {
 		end,
 	},
 	
-	-- TODO: visuals, description
+	-- TODO: icon
 	-- Money
 	poker_chip = {
 		name = "Poker Chip",
 		text = {
-			"Each played {C:attention}#3#{} have",
-			"{C:green}#1# in #2#{} chance to give you {C:money}$#4#{},",
-			"{C:red}-$#5#{} otherwise",
+			"{C:green}#1# in #2#{} chance to earn",
+			"{C:money}$#4#{} when {C:attention}#3#{} scored,",
+			"{C:red}-$#5#{} otherwise"
 		},
 		config = { extra = { rank = 7, money_add = 5, money_sub = 2, odds = 2 } },
 		rarity = 1,
@@ -1433,8 +1419,8 @@ local jokers = {
 		text = {
 			"Gains {C:chips}+#1#{} chips for every card",
 			"in the full deck without",
-			"{C:attention}Enhancement{}, {C:attention}Seal{} or {C:attention}Edition{}",
-			"(current chips: {C:chips}#2#{})",
+			"{C:attention}Enhancement{}, {C:attention}Seal{} and {C:attention}Edition{}",
+			"{C:inactive}(Currently {C:chips}+#2#{}{C:inactive} chips){}",
 		},
 		config = { extra = { chips_add = 2, chips = 0 } },
 		rarity = 1,
@@ -1447,7 +1433,6 @@ local jokers = {
         calculate = function(self, context)
 			-- Play
             if SMODS.end_calculate_context(context) then
-				recalculate_simple_joker(self)
 				return {
 					message = localize {
 						type = "variable",
@@ -1471,8 +1456,8 @@ local spectrals = {
 		name = "Shredder",
 		text = {
 			"Split choosen {C:attention}card{} into 2s ",
-			"with the same {C:attention}Enhancement,",
-			"Seal and Edition{}"
+			"with the same {C:attention}Enhancement{},",
+			"{C:attention}Seal{} and {C:attention}Edition{}"
 		},
 		config = { extra = { cards = 1, remove_card = true, min_highlighted = 1, max_highlighted = 1 } },
 		cost = 4,
@@ -1556,11 +1541,13 @@ local tarots = {
 			return { card.config.extra.h_size }
 		end,
 	},
-	solar = {
-		name = "Solar",
+	
+	-- TODO: sounds!
+	treasure = {
+		name = "Treasure",
 		text = {
-			"Enhances {C:attention}#1#{} selected card",
-			"into a random {C:attention}Enhancement{}"
+			"Enhances {C:attention}#1#{} selected cards",
+			"to a random {C:attention}Enhancement{}"
 		},
 		config = { max_highlighted = 2, min_highlighted = 1 },
 		cost = 3,
@@ -1570,13 +1557,33 @@ local tarots = {
             return card.ability.consumeable.max_highlighted >= #G.hand.highlighted and #G.hand.highlighted >= card.ability.consumeable.min_highlighted
 		end,
 		use = function(card, area, copier)
+			G.E_MANAGER:add_event(Event({trigger = 'after', delay = 0.4, func = function()
+				play_sound('tarot1')
+				card:juice_up(0.3, 0.5)
+				return true end }))
+				
             for i=1, #G.hand.highlighted do 
-				local card_high = G.hand.highlighted[i]
-				card_high:flip()
-				card_high:set_ability(get_random_enhancement('eva_tarot_solar', true), nil, true)
-				card_high:flip()
-				--G.hand:unhighlight_all()
-            end
+				G.E_MANAGER:add_event(Event({trigger = 'after',delay = 0.15,func = function() 
+					--G.hand.highlighted[i]:flip();
+					--play_sound('card1', percent);
+					--G.hand.highlighted[i]:juice_up(0.3, 0.3);
+					
+					local card_high = G.hand.highlighted[i]
+					card_high:flip()
+					card_high:set_ability(get_random_enhancement('eva_tarot_solar', true), nil, true)
+					card_high:flip()
+					--G.hand:unhighlight_all()
+					play_sound('card1', 1 - 0.02 * i);
+					return true 
+				end }))
+				
+				--local card_high = G.hand.highlighted[i]
+				--card_high:flip()
+				--card_high:set_ability(get_random_enhancement('eva_tarot_solar', true), nil, true)
+				--card_high:flip()
+				----G.hand:unhighlight_all()
+				--play_sound('card1', percent);
+			end
 			return true
 		end,
 		loc_def = function(card)
@@ -1631,6 +1638,7 @@ local tarots = {
 		end,
 	}
 	--]]
+
 }
 
 function SMODS.INIT.EvaJokers()
@@ -1719,7 +1727,7 @@ function SMODS.INIT.EvaJokers()
                 :register()
         end
 		
-		local _tarot = SMODS.Spectrals[tarot.slug]
+		local _tarot = SMODS.Tarots[tarot.slug]
         _tarot.can_use = v.can_use 
         _tarot.use = v.use
 		_tarot.loc_def = v.loc_def
@@ -1727,13 +1735,11 @@ function SMODS.INIT.EvaJokers()
 	
     -- Challenges
     G.localization.misc.challenge_names.c_mod_evanightonmars 	= "Night on Mars"
-    G.localization.misc.challenge_names.c_mod_evatarotnight 	= "Major Arcana"
-	
+    G.localization.misc.challenge_names.c_mod_evamajorarcana 	= "Major Arcana"
 	local id_challenge = 21
     for k, v in pairs(challenges) do 
 		table.insert(G.CHALLENGES,id_challenge,v)
 		id_challenge = id_challenge + 1
-        --G.localization.descriptions.misc.challenge_names.k = v.name
     end
 end
 
@@ -1745,23 +1751,23 @@ function Back.apply_to_run(arg_56_0)
     if arg_56_0.effect.config.eva_tag_deck      then eva_tag_deck      = true end
 end
 
--- Set blind
+-- Start any blind
 local setblind_ref = Blind.set_blind
 function Blind.set_blind(blind, reset, silent)
     setblind_ref(blind, reset, silent)
-    if eva_tag_deck and reset then
-		for i = 1,2 do 	
-			local tag_name = get_random_tag('j_eva_tagged')
+    if eva_tag_deck and reset and not blind.boss then
+		--for i = 1,2 do 	
+			local tag_name = get_random_tag('eva_tag_deck')
 			local tag = Tag(tag_name)
 			if tag_name == 'tag_orbital' then
 				local _poker_hands = {}
 				for k, v in pairs(G.GAME.hands) do
 					if v.visible then _poker_hands[#_poker_hands+1] = k end
 				end
-				tag.ability.orbital_hand = pseudorandom_element(_poker_hands, pseudoseed('j_eva_tagged_orbital_tag'))
+				tag.ability.orbital_hand = pseudorandom_element(_poker_hands, pseudoseed('eva_tag_deck_orbital_tag'))
 			end
 			add_tag(tag)
-		end
+		--end
 	end
 end
 
@@ -1769,30 +1775,21 @@ end
 local set_costref = Card.set_cost
 function Card.set_cost(self)
     set_costref(self)
-
-	-- Tarot expansion ------------
-	if self.ability.set == "Tarot" and self.ability.consumeable and self.ability.consumeable.max_highlighted and G and G.jokers and G.jokers.cards then 
-		for _, v in pairs(G.jokers.cards) do
-			if v.ability.name == "Eva Tarot Expansion" then
-				if not self.ability.consumeable.max_highlighted_save then self.ability.consumeable.max_highlighted_save = self.ability.consumeable.max_highlighted end
-				self.ability.consumeable.max_highlighted = self.ability.consumeable.max_highlighted_save + 1
-			end
-		end 
-	end
-	----------------------------------
-	
-	
 	if G.playing_cards then
-		--if self.ability.name == "Eva Maroon" then recalculate_maroon_joker(self) end
-		
 		if self.ability.name == "Eva Golden Idol" then
 			-- Randomize start card
-			local _card = get_random_card('eva_golden_idol' .. i)
+			local _card = get_random_card('eva_golden_idol')
 			if _card then 
 				self.ability.extra.idol_suit = _card.base.suit
 				self.ability.extra.idol_id   = _card.base.id
 				self.ability.extra.idol_rank = rank_name(_card.base.id)
 			end
+		end
+		
+		if self.ability.name == "Eva Crystal Joker" then
+			-- Randomize start card
+			local _card = get_random_card('eva_crystal_joker')
+			if _card then self.ability.extra.suit = _card.base.suit end
 		end
 		
 		--[[ Bingo!
@@ -1818,14 +1815,15 @@ function Card.sell_card(self)
 	if self.ability.set == "Joker" then 
         for _, v in pairs(G.jokers.cards) do
             if v.ability.name == "Eva Precognition" and v ~= self then
+				-- v.config.center.rarity
 				local charges_add = 
-					v.rarity == 2 and 2 or 
-					v.rarity == 3 and 4 or
-					v.rarity >  3 and 12 or 1
+					self.config.center.rarity == 2 and 2 or 
+					self.config.center.rarity == 3 and 4 or
+					self.config.center.rarity == 4 and 12 or 1
 					
 				v.ability.extra.charges = v.ability.extra.charges + charges_add
 				card_eval_status_text(v, "extra", nil, nil, nil, {
-					message = localize("eva_charge"),
+					message = localize("eva_charge") ..' + '.. charges_add,
 					colour = G.C.PURPLE
 				})
             end
@@ -1841,16 +1839,13 @@ function Card:add_to_deck(from_debuff)
 			G.jokers.config.card_limit = G.jokers.config.card_limit + self.ability.extra.j_slots
         end
 		
-		--[[
-        if self.ability.name == "Eva Tarot Expansion" then
-			for _, v in pairs(G.jokers.cards) do
-				if v.ability.name == "Eva Tarot Expansion" then
-					self.ability.consumeable.max_highlighted = self.ability.consumeable.max_highlighted + 1
+		if self.ability.name == "Eva Tarot Expansion" then
+			for _, v in pairs(G.P_CENTER_POOLS['Tarot']) do
+				if v.config.max_highlighted then
+					v.config.max_highlighted = v.config.max_highlighted + self.ability.extra.add
 				end
-			end 
-			-- self.ability.consumeable and self.ability.consumeable.max_highlighted
-        end
-		--]]
+			end
+		end
     end
     add_to_deckref(self, from_debuff)
 end
@@ -1862,14 +1857,20 @@ function Card:remove_from_deck(from_debuff)
         if self.ability.name == "Eva Useless Joker" then
 			G.jokers.config.card_limit = G.jokers.config.card_limit - self.ability.extra.j_slots
         end
-
+		
+		if self.ability.name == "Eva Tarot Expansion" then
+			for _, v in pairs(G.P_CENTER_POOLS['Tarot']) do
+				if v.config.max_highlighted then
+					v.config.max_highlighted = v.config.max_highlighted - self.ability.extra.add
+				end
+			end
+		end
+		
         -- Sets the pool flag (dataminer should generate once per game)
 		if self.ability.name == "Eva Dataminer" then
 			G.GAME.pool_flags.dataminer_appears = false
         end
-			
     end
-
     remove_from_deckref(self, from_debuff)
 end
 
@@ -1878,8 +1879,27 @@ local updateref = Card.update
 function Card:update(dt)
 	updateref(self, dt)
     if G.STAGE == G.STAGES.RUN then
-        if self.ability.name == "Eva Maroon" 		then recalculate_maroon_joker(self) end
-        if self.ability.name == "Eva Simple Joker"	then recalculate_simple_joker(self) end
+        if self.ability.name == "Eva Maroon" then
+			local xmult = 1
+			for k, v in pairs(G.playing_cards) do 
+				if v.ability.effect ~= 'Stone Card' then
+					if v:is_suit('Hearts') or v:is_suit('Diamonds') then xmult = xmult + self.ability.extra.xmult_add end
+					if v:is_suit('Clubs' ) or v:is_suit('Spades')   then xmult = xmult - self.ability.extra.xmult_sub end
+					--    if v.base.suit == 'Hearts' or v.base.suit == 'Diamonds' then xmult = xmult + self.ability.extra.xmult_add   
+					--elseif v.base.suit == 'Clubs'  or v.base.suit == 'Spades'   then xmult = xmult - self.ability.extra.xmult_sub end
+				end
+			end
+			self.ability.extra.current_xmult = xmult
+		end
+        if self.ability.name == "Eva Simple Joker" then 
+			local chips = 0
+			for _, v in pairs(G.playing_cards) do 
+				if v.ability.effect == 'Base' and not v.seal and not v.edition then
+					chips = chips + self.ability.extra.chips_add
+				end
+			end
+			self.ability.extra.chips = chips
+		end
 	end
 end
 
