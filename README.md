@@ -22,9 +22,9 @@ Jokers can only be obtained through consumables, Tarot cards buffed as hell
 # ~ Consumables ~
 ### Tarots
 <b>Home</b> - +1 hand size next round
-<br><b>Treasure</b> - enhance 2 choosen cards with a random Enhancement
+<br><b>Treasure</b> - Enhance 2 choosen cards with a random Enhancement
 ### Spectrals
-<b>Shredder</b> - split choosen card into bunch of 2s with the same characteristics
+<b>Shredder</b> - Split choosen card into bunch of 2s with the same characteristics
 <br><br>
 
 # ~ Jokers ~
